@@ -6,6 +6,7 @@ use hound::{WavReader, WavWriter};
 use std::ffi::{CStr, OsStr};
 use std::fs::{self, File};
 use std::io::Write;
+use std::os::raw::c_char;
 use std::path::Path;
 
 const ZERO_FILL_OK: i32 = 0;
@@ -15,8 +16,8 @@ const ZERO_FILL_IO: i32 = 3;
 const ZERO_FILL_WAV: i32 = 4;
 
 #[no_mangle]
-pub extern fn zero_fill_matching(file_path: &CStr) -> i32 {
-    let file_path = file_path.to_str();
+pub extern fn zero_fill_matching(file_path: *const c_char) -> i32 {
+    let file_path = unsafe { CStr::from_ptr(file_path).to_str() };
 
     let res = match file_path {
         Ok(file_path) => fill_matching(file_path),
@@ -169,7 +170,7 @@ mod test {
 
         let file_path_with_nul = &format!("{}\0", file_path);
         let c_file_path = CStr::from_bytes_with_nul(file_path_with_nul.as_bytes()).unwrap();
-        let status = zero_fill_matching(c_file_path);
+        let status = zero_fill_matching(c_file_path.as_ptr());
 
         assert!(status == ZERO_FILL_OK);
 
