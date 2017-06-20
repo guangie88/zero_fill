@@ -3,7 +3,7 @@ pub mod error;
 use self::error::Error;
 use hound::{WavReader, WavWriter};
 
-use std::ffi::{CStr, OsStr};
+use std::ffi::CStr;
 use std::fs::{self, File};
 use std::io::Write;
 use std::os::raw::c_char;
@@ -45,8 +45,12 @@ pub fn fill_matching<P: AsRef<Path>>(file_path: P) -> error::Result<()> {
 
     let ext_type = match file_path.extension() {
         Some(ext) => {
-            if ext == OsStr::new("wav") { ExtType::Wav }
-            else { ExtType::Others }
+            let ext = ext.to_string_lossy().to_lowercase();
+
+            match ext.as_ref() {
+                "wav" => ExtType::Wav,
+                _ => ExtType::Others,
+            }
         },
 
         None => ExtType::Others,
@@ -159,7 +163,7 @@ mod test {
 
     #[test]
     pub fn test_c_zero_fill_matching() {
-        let file_path = "test_c_zero_fill_matching.wav";
+        let file_path = "test_c_zero_fill_matching.WAV";
         write_data_into_file(file_path, &wav_vec());
 
         // check that the samples are valid
